@@ -15,7 +15,7 @@
 
             <section class="card">
                 <div class="music-player">
-                    <div class="album-art" aria-hidden="true"><span>W</span></div>
+                    <div class="album-art" role="button" aria-label="Show lyrics" aria-expanded="false" title="Show lyrics"><span>W</span></div>
                     <div class="track-details">
                         <p class="track-label">NOW PLAYING</p>
                         <h3>Where We Are</h3>
@@ -30,11 +30,12 @@
                     </div>
                     <button class="player-button" id="playerToggle" type="button" aria-label="Play or pause">▶</button>
                 </div>
-                <h2>Lyrics</h2>
                 <div class="youtube-player">
                     <iframe id="ytPlayer" src="https://www.youtube.com/embed/iWqB699HEFY?enablejsapi=1&rel=0&modestbranding=1&controls=0&playsinline=1" title="YouTube video player" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
                 </div>
-                <div class="lyrics">
+                <div class="lyrics-panel hidden" id="lyricsPanel">
+                    <h2 class="sr-only">Lyrics</h2>
+                    <div class="lyrics">
                     Remember when we would stay out too late
                     We were young, havin' fun, made mistakes
                     Did we ever know? Did we ever know?
@@ -162,6 +163,7 @@
                     僕たちが今いる場所で 離れずにいられるだけの
                     十分な愛さえあれば、それだけでいいんだ
                 </div>
+                </div>
 
                 <div class="placeholder">
                     ※本サイトはファンアート目的の架空サイトです。
@@ -181,6 +183,8 @@
             const progressFill = document.getElementById('progressFill');
             const currentTimeEl = document.getElementById('currentTime');
             const durationTimeEl = document.getElementById('durationTime');
+            const lyricsPanel = document.getElementById('lyricsPanel');
+            const albumArt = document.querySelector('.album-art');
             let ytPlayer;
             let progressTimer;
 
@@ -205,19 +209,11 @@
                 playerToggle.textContent = isPlaying ? '❚❚' : '▶';
             }
 
-            function updateVideoVisibility(isPlaying) {
-                const youtubeContainer = document.querySelector('.youtube-player');
-                if (!youtubeContainer) return;
-                youtubeContainer.classList.toggle('hidden', isPlaying);
-            }
-
-            function updateLyricsScroll() {
-                if (!lyrics || !ytPlayer) return;
-                const duration = ytPlayer.getDuration();
-                const current = ytPlayer.getCurrentTime();
-                const maxScroll = lyrics.scrollHeight - lyrics.clientHeight;
-                if (duration > 0 && maxScroll > 0) {
-                    lyrics.scrollTop = Math.min(maxScroll, (current / duration) * maxScroll);
+            function toggleLyricsPanel() {
+                if (!lyricsPanel) return;
+                const isHidden = lyricsPanel.classList.toggle('hidden');
+                if (albumArt) {
+                    albumArt.setAttribute('aria-expanded', String(!isHidden));
                 }
             }
 
@@ -231,7 +227,6 @@
                     durationTimeEl.textContent = formatTime(duration);
                 }
                 currentTimeEl.textContent = formatTime(current);
-                updateLyricsScroll();
             }
 
             function startProgressTimer() {
@@ -261,6 +256,19 @@
                 playerToggle.addEventListener('click', onPlayerToggle);
             }
 
+            if (albumArt) {
+                albumArt.tabIndex = 0;
+                albumArt.setAttribute('role', 'button');
+                albumArt.setAttribute('aria-expanded', 'false');
+                albumArt.addEventListener('click', toggleLyricsPanel);
+                albumArt.addEventListener('keypress', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        toggleLyricsPanel();
+                    }
+                });
+            }
+
             if (progressBar) {
                 progressBar.addEventListener('click', event => {
                     if (!ytPlayer) return;
@@ -286,7 +294,6 @@
                         onStateChange: event => {
                             const playing = event.data === YT.PlayerState.PLAYING;
                             updateToggle(playing);
-                            updateVideoVisibility(playing);
                             if (playing) {
                                 startProgressTimer();
                             } else {
