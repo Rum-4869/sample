@@ -174,7 +174,6 @@
             const albumArt = document.querySelector('.album-art');
             let ytPlayer;
             let progressTimer;
-            let lyricsLineElements = [];
 
             function formatTime(seconds) {
                 if (!seconds || Number.isNaN(seconds)) return '0:00';
@@ -186,31 +185,10 @@
             function renderLyrics() {
                 if (!lyrics) return;
                 const regex = /[A-Za-z][A-Za-z0-9'’"“”.,?!()&:\-;]*(?: +[A-Za-z][A-Za-z0-9'’"“”.,?!()&:\-;]*)*/g;
-                const lines = lyrics.textContent
-                    .split('\n')
-                    .map(line => line.trim())
-                    .filter(line => line.length > 0);
-
+                const lines = lyrics.textContent.split('\n').map(line => line.trim());
                 lyrics.innerHTML = lines
-                    .map((line, index) => `
-                        <div class="lyric-line" data-line-index="${index}">
-                            ${line.replace(regex, '<span class="en">$&</span>')}
-                        </div>`)
-                    .join('');
-
-                lyricsLineElements = Array.from(lyrics.querySelectorAll('.lyric-line'));
-            }
-
-            function setActiveLyricLine(index) {
-                if (!lyricsLineElements.length) return;
-                const activeIndex = Math.max(0, Math.min(lyricsLineElements.length - 1, index));
-                lyricsLineElements.forEach((item, idx) => {
-                    item.classList.toggle('active', idx === activeIndex);
-                });
-                const activeLine = lyricsLineElements[activeIndex];
-                if (activeLine) {
-                    activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
+                    .map(line => line ? line.replace(regex, '<span class="en">$&</span>') : '')
+                    .join('<br>');
             }
 
             function updateToggle(isPlaying) {
@@ -234,8 +212,6 @@
                     const percent = Math.min(100, (current / duration) * 100);
                     progressFill.style.width = `${percent}%`;
                     durationTimeEl.textContent = formatTime(duration);
-                    const lineIndex = Math.floor((current / duration) * lyricsLineElements.length);
-                    setActiveLyricLine(lineIndex);
                 }
                 currentTimeEl.textContent = formatTime(current);
             }
