@@ -14,9 +14,18 @@
             </header>
 
             <section class="card">
+                <div class="music-player">
+                    <div class="album-art" aria-hidden="true"><span>W</span></div>
+                    <div class="track-details">
+                        <p class="track-label">NOW PLAYING</p>
+                        <h3>Where We Are</h3>
+                        <p class="artist">One Direction</p>
+                    </div>
+                    <button class="player-button" id="playerToggle" type="button" aria-label="Play or pause">▶</button>
+                </div>
                 <h2>Lyrics</h2>
                 <div class="youtube-player">
-                    <iframe id="ytPlayer" src="https://www.youtube.com/embed/iWqB699HEFY?enablejsapi=1&rel=0&modestbranding=1&controls=1&playsinline=1" title="YouTube video player" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                    <iframe id="ytPlayer" src="https://www.youtube.com/embed/iWqB699HEFY?enablejsapi=1&rel=0&modestbranding=1&controls=0&playsinline=1" title="YouTube video player" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
                 </div>
                 <div class="lyrics">
                     Remember when we would stay out too late
@@ -157,15 +166,58 @@
             </footer>
         </div>
 
+        <script src="https://www.youtube.com/iframe_api"></script>
         <script>
             const lyrics = document.querySelector('.lyrics');
-            if (lyrics) {
+            const playerToggle = document.getElementById('playerToggle');
+            let ytPlayer;
+
+            function renderLyrics() {
+                if (!lyrics) return;
                 const regex = /[A-Za-z][A-Za-z0-9'’"“”.,?!()&:\-;]*(?: +[A-Za-z][A-Za-z0-9'’"“”.,?!()&:\-;]*)*/g;
                 const lines = lyrics.textContent.split('\n').map(line => line.trim());
                 lyrics.innerHTML = lines
                     .map(line => line ? line.replace(regex, '<span class="en">$&</span>') : '')
                     .join('<br>');
             }
+
+            function updateToggle(isPlaying) {
+                if (!playerToggle) return;
+                playerToggle.textContent = isPlaying ? '❚❚' : '▶';
+            }
+
+            function onPlayerToggle() {
+                if (!ytPlayer) return;
+                const state = ytPlayer.getPlayerState();
+                if (state === YT.PlayerState.PLAYING) {
+                    ytPlayer.pauseVideo();
+                } else {
+                    ytPlayer.playVideo();
+                }
+            }
+
+            if (playerToggle) {
+                playerToggle.disabled = true;
+                playerToggle.addEventListener('click', onPlayerToggle);
+            }
+
+            function onYouTubeIframeAPIReady() {
+                ytPlayer = new YT.Player('ytPlayer', {
+                    events: {
+                        onReady: () => {
+                            if (playerToggle) {
+                                playerToggle.disabled = false;
+                            }
+                            updateToggle(false);
+                        },
+                        onStateChange: event => {
+                            updateToggle(event.data === YT.PlayerState.PLAYING);
+                        }
+                    }
+                });
+            }
+
+            renderLyrics();
         </script>
     </body>
 </html>
