@@ -50,9 +50,11 @@ body {
     line-height: 1.9;
     color: #e2e8f0;
     font-size: clamp(1rem, 2.5vw, 1.05rem);
-    white-space: pre-wrap;
-    text-align: center;
     max-width: 720px;
+    width: min(100%, 720px);
+    text-align: center;
+    display: inline-block;
+    white-space: normal;
 }
 
 .lyrics .en {
