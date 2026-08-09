@@ -20,6 +20,13 @@
                         <p class="track-label">NOW PLAYING</p>
                         <h3>Where We Are</h3>
                         <p class="artist">One Direction</p>
+                        <div class="player-meta">
+                            <span class="time current" id="currentTime">0:00</span>
+                            <button class="progress" id="progressBar" type="button" aria-label="Seek in track">
+                                <span class="progress-fill" id="progressFill"></span>
+                            </button>
+                            <span class="time total" id="durationTime">0:00</span>
+                        </div>
                     </div>
                     <button class="player-button" id="playerToggle" type="button" aria-label="Play or pause">▶</button>
                 </div>
@@ -170,7 +177,19 @@
         <script>
             const lyrics = document.querySelector('.lyrics');
             const playerToggle = document.getElementById('playerToggle');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const currentTimeEl = document.getElementById('currentTime');
+            const durationTimeEl = document.getElementById('durationTime');
             let ytPlayer;
+            let progressTimer;
+
+            function formatTime(seconds) {
+                if (!seconds || Number.isNaN(seconds)) return '0:00';
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+                return `${mins}:${secs}`;
+            }
 
             function renderLyrics() {
                 if (!lyrics) return;
@@ -184,6 +203,47 @@
             function updateToggle(isPlaying) {
                 if (!playerToggle) return;
                 playerToggle.textContent = isPlaying ? '❚❚' : '▶';
+            }
+
+            function updateVideoVisibility(isPlaying) {
+                const youtubeContainer = document.querySelector('.youtube-player');
+                if (!youtubeContainer) return;
+                youtubeContainer.classList.toggle('hidden', isPlaying);
+            }
+
+            function updateLyricsScroll() {
+                if (!lyrics || !ytPlayer) return;
+                const duration = ytPlayer.getDuration();
+                const current = ytPlayer.getCurrentTime();
+                const maxScroll = lyrics.scrollHeight - lyrics.clientHeight;
+                if (duration > 0 && maxScroll > 0) {
+                    lyrics.scrollTop = Math.min(maxScroll, (current / duration) * maxScroll);
+                }
+            }
+
+            function updateProgress() {
+                if (!ytPlayer || !progressFill || !currentTimeEl || !durationTimeEl) return;
+                const duration = ytPlayer.getDuration();
+                const current = ytPlayer.getCurrentTime();
+                if (duration > 0 && duration !== Infinity) {
+                    const percent = Math.min(100, (current / duration) * 100);
+                    progressFill.style.width = `${percent}%`;
+                    durationTimeEl.textContent = formatTime(duration);
+                }
+                currentTimeEl.textContent = formatTime(current);
+                updateLyricsScroll();
+            }
+
+            function startProgressTimer() {
+                if (progressTimer) clearInterval(progressTimer);
+                progressTimer = setInterval(updateProgress, 500);
+            }
+
+            function stopProgressTimer() {
+                if (progressTimer) {
+                    clearInterval(progressTimer);
+                    progressTimer = null;
+                }
             }
 
             function onPlayerToggle() {
@@ -201,6 +261,18 @@
                 playerToggle.addEventListener('click', onPlayerToggle);
             }
 
+            if (progressBar) {
+                progressBar.addEventListener('click', event => {
+                    if (!ytPlayer) return;
+                    const duration = ytPlayer.getDuration();
+                    if (duration <= 0 || duration === Infinity) return;
+                    const rect = progressBar.getBoundingClientRect();
+                    const clickRatio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+                    ytPlayer.seekTo(clickRatio * duration, true);
+                    updateProgress();
+                });
+            }
+
             function onYouTubeIframeAPIReady() {
                 ytPlayer = new YT.Player('ytPlayer', {
                     events: {
@@ -209,9 +281,17 @@
                                 playerToggle.disabled = false;
                             }
                             updateToggle(false);
+                            updateProgress();
                         },
                         onStateChange: event => {
-                            updateToggle(event.data === YT.PlayerState.PLAYING);
+                            const playing = event.data === YT.PlayerState.PLAYING;
+                            updateToggle(playing);
+                            updateVideoVisibility(playing);
+                            if (playing) {
+                                startProgressTimer();
+                            } else {
+                                stopProgressTimer();
+                            }
                         }
                     }
                 });
