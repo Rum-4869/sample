@@ -8,7 +8,6 @@
     </head>
     <body>
         <div class="container">
-            <button class="youtube-play" id="youtubePlay" type="button" aria-label="Play YouTube music">▶</button>
             <header class="site-header">
                 <h2>One Direction</h2>
                 <h1>Where We Are</h1>
@@ -16,6 +15,9 @@
 
             <section class="card">
                 <h2>Lyrics</h2>
+                <div class="youtube-player">
+                    <iframe id="ytPlayer" src="https://www.youtube.com/embed/iWqB699HEFY?enablejsapi=1&rel=0&modestbranding=1&controls=1&playsinline=1" title="YouTube video player" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                </div>
                 <div class="lyrics">
                     Remember when we would stay out too late
                     We were young, havin' fun, made mistakes
@@ -155,11 +157,6 @@
             </footer>
         </div>
 
-        <div class="youtube-player">
-            <iframe id="ytPlayer" src="https://www.youtube.com/embed/p5F6H-M2a8Q?enablejsapi=1&rel=0&showinfo=0" title="YouTube video player" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        </div>
-
-        <script src="https://www.youtube.com/iframe_api"></script>
         <script>
             const lyrics = document.querySelector('.lyrics');
             if (lyrics) {
@@ -168,29 +165,6 @@
                 lyrics.innerHTML = lines
                     .map(line => line ? line.replace(regex, '<span class="en">$&</span>') : '')
                     .join('<br>');
-            }
-
-            let ytPlayer;
-            let isPlaying = false;
-            function onYouTubeIframeAPIReady() {
-                ytPlayer = new YT.Player('ytPlayer', {
-                    events: {
-                        onReady: () => {
-                            const playButton = document.getElementById('youtubePlay');
-                            playButton.addEventListener('click', () => {
-                                if (!ytPlayer) return;
-                                if (isPlaying) {
-                                    ytPlayer.pauseVideo();
-                                    playButton.textContent = '▶';
-                                } else {
-                                    ytPlayer.playVideo();
-                                    playButton.textContent = '❚❚';
-                                }
-                                isPlaying = !isPlaying;
-                            });
-                        }
-                    }
-                });
             }
         </script>
     </body>
