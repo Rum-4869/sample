@@ -213,6 +213,17 @@ body {
     font-weight: 700;
 }
 
+.lyric-line {
+    padding: 0.35rem 0;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.lyric-line.active {
+    color: #ffffff;
+    font-weight: 700;
+    transform: scale(1.02);
+}
+
 .placeholder {
     margin-top: 2rem;
     padding: 1.6rem 1.4rem;
